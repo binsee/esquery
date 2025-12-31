@@ -97,9 +97,14 @@ attr
     path = i:identifierName { return { type: 'literal', value: i }; }
     type = "type(" _ t:[^ )]+ _ ")" { return { type: 'type', value: t.join('') }; }
     flags = [imsu]+
-    regex = "/" d:[^/]+ "/" flgs:flags? { return {
-      type: 'regexp', value: new RegExp(d.join(''), flgs ? flgs.join('') : '') };
+    regex = "/" pattern:(re_character_class / re_escape / re_chars)+ "/" flgs:flags? {
+      return {
+        type: 'regexp', value: new RegExp(pattern.join(''), flgs ? flgs.join('') : '')
+      };
     }
+      re_character_class = "[" cs:([^\]\\] / re_escape)+ "]" { return '[' + cs.join('') + ']'; }
+      re_escape = "\\" a:. { return '\\' + a; }
+      re_chars = cs:[^/\\[]+ { return cs.join(''); }
 
 field = "." i:identifierName is:("." identifierName)* {
   return { type: 'field', name: is.reduce(function(memo, p){ return memo + p[0] + p[1]; }, i)};
